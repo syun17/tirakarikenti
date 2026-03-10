@@ -1,0 +1,28 @@
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# Project specific
+node_modules/
+dist/
+tmp/
+bin/
+main
+*.exe

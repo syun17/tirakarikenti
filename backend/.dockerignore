@@ -1,0 +1,17 @@
+# Air hot reload temp files
+tmp/
+
+# Local binaries
+main
+*.exe
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Go dependencies (if vendor is not used)
+# vendor/

@@ -1,0 +1,9 @@
+# Go binaries
+/main
+/*.exe
+
+# Air hot reload temp files
+/tmp/
+
+# Go dependencies
+/vendor/
