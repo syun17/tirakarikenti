@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition"
@@ -46,7 +47,19 @@ func initAWS() {
 		log.Println("S3_BUCKET environment variable is not set. Assuming running in container with env_file applied.")
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = "us-east-1" // Fallback to us-east-1 if not specified
+	}
+
+	accessKey := os.Getenv("AWS_ACCESS_KEY_ID")
+	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	token := os.Getenv("AWS_SESSION_TOKEN")
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, token)),
+	)
 	if err != nil {
 		log.Fatalf("unable to load SDK config, %v", err)
 	}
