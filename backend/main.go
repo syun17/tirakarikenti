@@ -118,12 +118,28 @@ func main() {
 					Name:   aws.String(objectKey),
 				},
 			},
-			MaxLabels: aws.Int32(10), // 最大10個のラベル
+			MaxLabels:     aws.Int32(10),
+			MinConfidence: aws.Float32(70),
 		})
 		if err != nil {
 			log.Printf("failed to detect labels: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to analyze image"})
 			return
+		}
+
+		for _, label := range rekOutput.Labels {
+			fmt.Println("Label:", aws.ToString(label.Name), aws.ToFloat32(label.Confidence))
+		}
+
+		for _, label := range rekOutput.Labels {
+			for _, instance := range label.Instances {
+				box := instance.BoundingBox
+				fmt.Println(
+					aws.ToString(label.Name),
+					aws.ToFloat32(box.Left),
+					aws.ToFloat32(box.Top),
+				)
+			}
 		}
 
 		// 3. ラベル数で簡易スコア生成

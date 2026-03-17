@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    depends_on:
+      - ai
     volumes:
       - ./backend:/app
     env_file:
@@ -25,6 +27,11 @@ services:
       - backend
     networks:
       - app-network
+
+  ai:
+    build: ./ai-python
+    ports:
+      - "8000:8000"
 
 networks:
   app-network:
