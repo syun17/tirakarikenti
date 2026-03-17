@@ -34,8 +34,10 @@ RUN pip install --no-cache-dir \
     numpy \
     matplotlib
 
-# YOLOモデルの事前ダウンロード
-RUN python -c "from ultralytics import YOLO; YOLO('yolo11l.pt')"
+# YOLOモデルの事前ダウンロード（固定パスに保存）
+RUN wget -O /app/yolo11l.pt https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11l.pt
+
+RUN python -c "import clip; clip.load('ViT-L/14', device='cpu')"
 
 # アプリケーションのコピー
 COPY main.py .

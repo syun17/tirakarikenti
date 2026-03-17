@@ -52,7 +52,7 @@ with torch.no_grad():
     text_features = model.encode_text(text)
     text_features /= text_features.norm(dim=-1, keepdim=True)
 
-yolo_model = YOLO("yolo11l.pt")
+yolo_model = YOLO("/app/yolo11l.pt")
 
 app = FastAPI()
 
@@ -115,7 +115,7 @@ async def analyze(file: UploadFile = File(...)):
 
     return {
         "image": file.filename,
-        "clipv4_messiness_score": float(messiness_score),
+        "score": round(float(messiness_score), 1),
         "yolo": objects
     }
 

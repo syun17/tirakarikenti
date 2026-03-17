@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"time"
@@ -205,6 +209,58 @@ func main() {
 		}
 
 		c.JSON(http.StatusOK, history)
+	})
+
+	r.POST("/analyze-python", func(c *gin.Context) {
+    	fileHeader, err := c.FormFile("image")
+    	if err != nil {
+    	    c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+    	    return
+    	}
+
+    	file, err := fileHeader.Open()
+    	if err != nil {
+    	    c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open image"})
+    	    return
+    	}
+    	defer file.Close()
+
+    	// multipart bodyを構築
+    	var buf bytes.Buffer
+    	writer := multipart.NewWriter(&buf)
+
+    	part, err := writer.CreateFormFile("file", fileHeader.Filename) // FastAPIのパラメータ名 "file" に合わせる
+    	if err != nil {
+    	    c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create form file"})
+    	    return
+    	}
+
+    	if _, err = io.Copy(part, file); err != nil {
+    	    c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to copy file"})
+    	    return
+    	}
+    	writer.Close()
+
+    	resp, err := http.Post(
+    	    "http://ai:8000/analyze/",  // タイポ修正 + dockerネットワーク内のホスト名
+    	    writer.FormDataContentType(),
+    	    &buf,
+    	)
+    	if err != nil {
+    	    log.Printf("failed to call python api: %v", err)
+    	    c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to call python api"})
+    	    return
+    	}
+    	defer resp.Body.Close()
+
+    	// レスポンスをデコード（抜けていた）
+    	var result map[string]interface{}
+    	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+    	    c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode response"})
+    	    return
+    	}
+
+    	c.JSON(http.StatusOK, result)
 	})
 
 	r.Run(":8080")
