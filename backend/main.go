@@ -12,6 +12,9 @@ import (
 	"os"
 	"time"
 
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -73,8 +76,28 @@ func initAWS() {
 	dynamoClient = dynamodb.NewFromConfig(cfg)
 }
 
+type User struct {
+    gorm.Model
+    Name  string `json:"name"`
+    Email string `json:"email" gorm:"unique"`
+}
+
+var db *gorm.DB
+
+func initDB() {
+    dsn := os.Getenv("DATABASE_URL")
+    var err error
+    db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        log.Fatal("DB接続失敗:", err)
+    }
+    db.AutoMigrate(&User{})
+}
+
+
 func main() {
 	initAWS()
+	initDB()
 
 	r := gin.Default()
 
@@ -262,6 +285,22 @@ func main() {
 
     	c.JSON(http.StatusOK, result)
 	})
+
+	r.GET("/users", func(c *gin.Context) {
+        var users []User
+        db.Find(&users)
+        c.JSON(200, users)
+    })
+
+    r.POST("/users", func(c *gin.Context) {
+        var user User
+        if err := c.ShouldBindJSON(&user); err != nil {
+            c.JSON(400, gin.H{"error": err.Error()})
+            return
+        }
+        db.Create(&user)
+        c.JSON(201, user)
+    })
 
 	r.Run(":8080")
 }
