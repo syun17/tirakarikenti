@@ -36,7 +36,7 @@ function App() {
       const formData = new FormData()
       formData.append('image', file)
 
-      const res = await fetch('/analyze', {
+      const res = await fetch('/analyze-python', {
         method: 'POST',
         body: formData,
       })
@@ -55,8 +55,8 @@ function App() {
   }
 
   const getScoreColor = (s: number) => {
-    if (s >= 70) return '#22c55e'
-    if (s >= 40) return '#f59e0b'
+    if (s < 30) return '#22c55e'
+    if (s < 60) return '#f59e0b'
     return '#ef4444'
   }
 

@@ -1,14 +1,37 @@
 services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8080:8080" 
+    depends_on:
+      - ai
+      - postgres
     volumes:
       - ./backend:/app
+    env_file:
+      - .env
     networks:
       - app-network
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/mydb?sslmode=disable
 
   frontend:
     build:
@@ -24,6 +47,16 @@ services:
     networks:
       - app-network
 
+  ai:
+    build: ./ai-python
+    ports:
+      - "8000:8000"
+    networks:          
+      - app-network
+
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
