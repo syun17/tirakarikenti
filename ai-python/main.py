@@ -3,6 +3,7 @@ import uvicorn
 import shutil
 import os
 import base64
+import io
 
 import torch
 import clip
@@ -63,14 +64,15 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @app.post("/analyze/")
 async def analyze(file: UploadFile = File(...)):
 
-    image_path = os.path.join(UPLOAD_DIR, file.filename)
+    # ===== 画像をメモリ上で読み込み =====
+    contents:bytes = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        return {"error": "File too large"}
 
-    # 画像保存
-    with open(image_path, "wb") as f:
-        f.write(await file.read())
+    image_pil = Image.open(io.BytesIO(contents)).convert("RGB")
 
-    # ここで初めて開く
-    image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    # ===== CLIP用前処理 =====
+    image = preprocess(image_pil).unsqueeze(0).to(device)
 
     # ===== 推論 =====
     with torch.no_grad():
@@ -99,7 +101,9 @@ async def analyze(file: UploadFile = File(...)):
     messiness_score = (normal_ratio*1 + messy_ratio*2 + very_messy_ratio*4) / 4 * 100
 
     # ---------- YOLO inference ----------
-    results = yolo_model(image_path,imgsz=640,augment=True ,device="cpu")
+
+    img_np = np.array(image_pil)
+    results = yolo_model(img_np,imgsz=640,augment=True ,device="cpu")
 
     objects = {}
 
