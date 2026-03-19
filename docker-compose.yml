@@ -26,8 +26,6 @@ services:
       - postgres
     volumes:
       - ./backend:/app
-    env_file:
-      - .env
     networks:
       - app-network
     environment:
