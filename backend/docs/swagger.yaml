@@ -1,0 +1,295 @@
+basePath: /
+definitions:
+  main.AnalyzeResponse:
+    properties:
+      img_id:
+        type: integer
+      score:
+        type: number
+      yolo:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  main.AppUser:
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  main.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  main.Img:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      room_id:
+        type: integer
+      score:
+        type: number
+    type: object
+  main.LoginRequest:
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+    required:
+    - id
+    - password
+    type: object
+  main.LoginResponse:
+    properties:
+      message:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  main.MyRoomItem:
+    properties:
+      room_id:
+        type: integer
+      room_name:
+        type: string
+    type: object
+  main.MyRoomsRequest:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
+  main.RegisterRequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  main.Room:
+    properties:
+      id:
+        type: integer
+      room_name:
+        type: string
+      score:
+        type: number
+      user_id:
+        type: integer
+    required:
+    - room_name
+    - user_id
+    type: object
+  main.RoomCreateRequest:
+    properties:
+      room_name:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - room_name
+    - user_id
+    type: object
+  main.RoomHistoryRequest:
+    properties:
+      room_id:
+        type: integer
+    required:
+    - room_id
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: 部屋の画像解析と履歴管理を行うAPI
+  title: Tirakari API
+  version: "1.0"
+paths:
+  /analyze-python:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 画像をPython APIに送信し、スコアと検出結果を保存する
+      parameters:
+      - description: 部屋ID
+        in: formData
+        name: room_id
+        required: true
+        type: integer
+      - description: アップロード画像
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.AnalyzeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: 画像解析
+      tags:
+      - analyze
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: ユーザーIDとパスワードでログイン認証を行う
+      parameters:
+      - description: ログイン情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: ログイン
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: 新規ユーザーを登録する
+      parameters:
+      - description: 登録情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/main.AppUser'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: ユーザー登録
+      tags:
+      - auth
+  /rooms:
+    post:
+      consumes:
+      - application/json
+      description: 新しい部屋を作成する
+      parameters:
+      - description: 部屋情報
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.RoomCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/main.Room'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: 部屋作成
+      tags:
+      - rooms
+  /rooms/history:
+    post:
+      consumes:
+      - application/json
+      description: room_idを基に過去の画像スコアと作成日を取得する
+      parameters:
+      - description: 部屋ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.RoomHistoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Img'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: 部屋の履歴取得
+      tags:
+      - rooms
+  /rooms/my-rooms:
+    post:
+      consumes:
+      - application/json
+      description: 指定したユーザーの部屋一覧を取得する
+      parameters:
+      - description: ユーザーID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.MyRoomsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.MyRoomItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: 自分の部屋一覧取得
+      tags:
+      - rooms
+swagger: "2.0"
