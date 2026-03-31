@@ -119,7 +119,7 @@ async def analyze(file: UploadFile = File(...)):
 
     return {
         "image": file.filename,
-        "score": round(float(messiness_score), 1),
+        "score": round((100-float(messiness_score)), 1),
         "yolo": objects
     }
 
