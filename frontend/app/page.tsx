@@ -67,8 +67,6 @@ export default function AnalysisPage() {
 
       // Reset image and redirect or wait
       setIsSaving(false);
-      // 自動的に履歴ページへ遷移
-      setTimeout(() => router.push("/history"), 1500);
 
     } catch (error) {
       console.error(error);
